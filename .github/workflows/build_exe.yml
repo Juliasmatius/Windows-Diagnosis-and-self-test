@@ -1,0 +1,43 @@
+name: Build Bat to Exe and Create Release
+
+on:
+  push:
+    branches:
+      - main  # Change this to your main branch name
+
+jobs:
+  build:
+    runs-on: windows-latest  # This action needs to run on a Windows runner
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Install Bat To Exe Converter
+      run: |
+        choco install bat-to-exe -y
+      shell: powershell
+
+    - name: Build .bat to .exe
+      run: |
+        # Replace 'your_script.bat' with the actual name of your .bat file
+        battoexeconverter -bat "your_script.bat" -save "output_file.exe"
+      shell: cmd
+
+    - name: Upload .exe artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: my-exe-artifact
+        path: output_file.exe
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./output_file.exe  # Path to the .exe file
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get Release URL
+      id: release_url
+      run: echo "Release URL: ${{ steps.create_release.outputs.upload_url }}
